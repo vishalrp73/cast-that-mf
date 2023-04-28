@@ -1,0 +1,17 @@
+{
+  "extends": "@tsconfig/node16/tsconfig.json",
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ESNext",
+    "strict": true,
+    "lib": ["DOM"],
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+  },
+  "include": ["src"],
+  "paths": {
+    "src/*": ["src/*"],
+  },
+  "exclude": ["node_modules"],
+}

@@ -1,0 +1,26 @@
+{
+  "name": "chromecast-ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tsc",
+    "dev": "npx tsc && cd ./dist && node index",
+    "start": "cd ./dist && node index"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@tsconfig/node16": "^1.0.3",
+    "@types/chromecast-api": "^0.4.1",
+    "@types/inquirer": "^9.0.3",
+    "@types/node": "^18.16.2",
+    "chromecast-api": "^0.4.0",
+    "inquirer": "^9.2.0",
+    "node-fetch": "^3.3.1",
+    "typescript": "^4.9.5"
+  }
+}
