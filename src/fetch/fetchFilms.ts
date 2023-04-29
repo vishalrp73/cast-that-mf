@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-const baseContentEndpoint = "http://192.168.1.109:3000";
+import { baseContentEndpoint } from "../lib/routes.js";
 
 export const fetchFilms = async () => {
   return fetch(baseContentEndpoint)
@@ -29,9 +29,37 @@ export const getList = async () => {
   });
 };
 
-export const getContentUrl = async (url: string) => {
-  fetch(`${baseContentEndpoint}${url}`)
+// accepted file formats: .avi | .mp4 | .mkv
+
+const sampleFilter = (urls: string[]): string => {
+  return urls.filter((url) => !url.includes("sample"))[0];
+};
+
+const acceptedFilesMap: string[] = [".avi", ".mp4", ".mkv"];
+
+export const getContentUrl = async (url: string): Promise<string> => {
+  return fetch(`${baseContentEndpoint}${url}`)
     .then((res) => res.text())
-    .then((text) => console.log(text))
-    .catch((err) => console.error("blyat", err));
+    .then((text) => {
+      const data = JSON.stringify(text).replace(/\\/g, "");
+      const extract = data.split("<a href=");
+      const filtered: string[] = [];
+      extract.forEach((ext) => {
+        acceptedFilesMap.forEach((type) => {
+          if (ext.includes(type)) {
+            filtered.push(ext);
+          }
+        });
+      });
+      const contentElement = sampleFilter(filtered);
+      const match = contentElement.match(/"(.*?)"/g);
+      if (match) {
+        return match[0].replace(/"/g, "");
+      }
+      return "invalid";
+    })
+    .catch((err) => {
+      console.error("blyat", err);
+      return "error";
+    });
 };

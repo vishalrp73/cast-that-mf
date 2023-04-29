@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import fetch from "node-fetch";
-const baseContentEndpoint = "http://192.168.1.109:3000";
+import { baseContentEndpoint } from "../lib/routes.js";
 export const fetchFilms = () => __awaiter(void 0, void 0, void 0, function* () {
     return fetch(baseContentEndpoint)
         .then((res) => {
@@ -33,9 +33,34 @@ export const getList = () => __awaiter(void 0, void 0, void 0, function* () {
         return cleanUrls;
     });
 });
+// accepted file formats: .avi | .mp4 | .mkv
+const sampleFilter = (urls) => {
+    return urls.filter((url) => !url.includes("sample"))[0];
+};
+const acceptedFilesMap = [".avi", ".mp4", ".mkv"];
 export const getContentUrl = (url) => __awaiter(void 0, void 0, void 0, function* () {
-    fetch(`${baseContentEndpoint}${url}`)
+    return fetch(`${baseContentEndpoint}${url}`)
         .then((res) => res.text())
-        .then((text) => console.log(text))
-        .catch((err) => console.error("blyat", err));
+        .then((text) => {
+        const data = JSON.stringify(text).replace(/\\/g, "");
+        const extract = data.split("<a href=");
+        const filtered = [];
+        extract.forEach((ext) => {
+            acceptedFilesMap.forEach((type) => {
+                if (ext.includes(type)) {
+                    filtered.push(ext);
+                }
+            });
+        });
+        const contentElement = sampleFilter(filtered);
+        const match = contentElement.match(/"(.*?)"/g);
+        if (match) {
+            return match[0].replace(/"/g, "");
+        }
+        return "invalid";
+    })
+        .catch((err) => {
+        console.error("blyat", err);
+        return "error";
+    });
 });

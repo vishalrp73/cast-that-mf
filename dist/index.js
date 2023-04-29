@@ -1,24 +1,21 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 import ChromecastAPI from "chromecast-api";
 import inquirer from "inquirer";
 import { subtitlesConfig } from "./lib/subs.js";
-import { films_db } from "./lib/films.js";
 import { getContentUrl, getList } from "./fetch/fetchFilms.js";
+import { baseContentEndpoint } from "./lib/routes.js";
 const client = new ChromecastAPI();
 const ffTime = 30;
 const revTime = 30;
 let ceaseFire = false;
-const filmInScope = films_db.americanPsycho;
-const media = {
-    url: filmInScope,
-    //   subtitles: [
-    //     {
-    //       language: "en-US",
-    //       url: "",
-    //       name: "English",
-    //     },
-    //   ],
-    subtitles_style: subtitlesConfig,
-};
 const exitCode = (device) => {
     console.log("exiting");
     ceaseFire = true;
@@ -90,43 +87,57 @@ const switchBoard = (device, answer) => {
     }
 };
 const films = Promise.resolve(getList());
-const getFilmUrl = (href) => {
-    console.log(href);
-    // ping page and get file href
-    const url = getContentUrl(href);
-};
-const chooseFilm = (films) => {
-    inquirer
-        .prompt({
-        type: "list",
-        message: "choose",
-        choices: films,
-        name: "chosen_film",
-    })
-        .then((answer) => {
-        const { chosen_film } = answer;
-        console.log(chosen_film);
-        const contentUrl = getFilmUrl(chosen_film);
-        console.log(contentUrl);
-    })
-        .catch((err) => console.error("nah g", err));
-};
 films.then((films) => {
     if (films === undefined || films.length === 0) {
         console.error("no connection, or no films found");
         return;
     }
-    chooseFilm(films);
-    //   client.on("device", (device) => {
-    //     if (device.friendlyName === "Vishal-CHR") {
-    //       console.log("yo mon we found da caster");
-    //       console.log(films);
-    //       device.play(media, function (err) {
-    //         if (!err) console.log("Playing on da chromecast");
-    //         if (!ceaseFire) {
-    //           prompt(device);
-    //         }
-    //       });
-    //     }
-    //   });
+    inquirer
+        .prompt({
+        // assigning `'list` to `type` causes TypeError ???
+        // @ts-expect-error
+        type: "list",
+        message: "choose",
+        choices: films,
+        name: "chosen_film",
+    })
+        .then((answer) => __awaiter(void 0, void 0, void 0, function* () {
+        const { chosen_film } = answer;
+        const contentUrl = yield getContentUrl(chosen_film);
+        if (contentUrl === "invalid" || contentUrl === "error") {
+            console.log("error occurred");
+            return;
+        }
+        client.on("device", (device) => {
+            console.log(device);
+            if (device.friendlyName === "Vishal-CHR") {
+                console.log("yo mon we found da caster");
+                console.log(contentUrl);
+                const media = {
+                    url: `${baseContentEndpoint}${contentUrl}`,
+                    //   subtitles: [
+                    //     {
+                    //       language: "en-US",
+                    //       url: "",
+                    //       name: "English",
+                    //     },
+                    //   ],
+                    subtitles_style: subtitlesConfig,
+                };
+                console.log(media.url);
+                device.play(media, function (err) {
+                    if (err) {
+                        console.error("blyat", err);
+                        return;
+                    }
+                    if (!err)
+                        console.log("Playing on da chromecast");
+                    if (!ceaseFire) {
+                        prompt(device);
+                    }
+                });
+            }
+        });
+    }))
+        .catch((err) => console.error("nah g", err));
 });

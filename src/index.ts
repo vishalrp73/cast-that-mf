@@ -2,27 +2,13 @@ import ChromecastAPI from "chromecast-api";
 import inquirer from "inquirer";
 import Device, { MediaResource } from "chromecast-api/lib/device";
 import { subtitlesConfig } from "./lib/subs.js";
-import { films_db } from "./lib/films.js";
-import { fetchFilms, getContentUrl, getList } from "./fetch/fetchFilms.js";
+import { getContentUrl, getList } from "./fetch/fetchFilms.js";
+import { baseContentEndpoint } from "./lib/routes.js";
 
 const client = new ChromecastAPI();
 const ffTime = 30;
 const revTime = 30;
 let ceaseFire: boolean = false;
-
-const filmInScope = films_db.americanPsycho;
-
-const media: MediaResource = {
-  url: filmInScope,
-  //   subtitles: [
-  //     {
-  //       language: "en-US",
-  //       url: "",
-  //       name: "English",
-  //     },
-  //   ],
-  subtitles_style: subtitlesConfig,
-};
 
 type Answers =
   | "q" /* quit */
@@ -110,47 +96,61 @@ const switchBoard = (device: Device, answer: Answers) => {
 
 const films = Promise.resolve(getList());
 
-const getFilmUrl = (href: string) => {
-  console.log(href);
-  // ping page and get file href
-  const url = getContentUrl(href);
-};
-
-const chooseFilm = (films: any) => {
-  inquirer
-    .prompt({
-      type: "list",
-      message: "choose",
-      choices: films,
-      name: "chosen_film",
-    })
-    .then((answer) => {
-      const { chosen_film } = answer;
-      console.log(chosen_film);
-      const contentUrl = getFilmUrl(chosen_film);
-      console.log(contentUrl);
-    })
-    .catch((err) => console.error("nah g", err));
-};
-
 films.then((films) => {
   if (films === undefined || films.length === 0) {
     console.error("no connection, or no films found");
     return;
   }
 
-  chooseFilm(films);
+  inquirer
+    .prompt({
+      // assigning `'list` to `type` causes TypeError ???
+      // @ts-expect-error
+      type: "list",
+      message: "choose",
+      choices: films,
+      name: "chosen_film",
+    })
+    .then(async (answer) => {
+      const { chosen_film } = answer;
+      const contentUrl = await getContentUrl(chosen_film);
+      if (contentUrl === "invalid" || contentUrl === "error") {
+        console.log("error occurred");
+        return;
+      }
 
-  //   client.on("device", (device) => {
-  //     if (device.friendlyName === "Vishal-CHR") {
-  //       console.log("yo mon we found da caster");
-  //       console.log(films);
-  //       device.play(media, function (err) {
-  //         if (!err) console.log("Playing on da chromecast");
-  //         if (!ceaseFire) {
-  //           prompt(device);
-  //         }
-  //       });
-  //     }
-  //   });
+      client.on("device", (device) => {
+        console.log(device);
+        if (device.friendlyName === "Vishal-CHR") {
+          console.log("yo mon we found da caster");
+          console.log(contentUrl);
+
+          const media: MediaResource = {
+            url: `${baseContentEndpoint}${contentUrl}`,
+            //   subtitles: [
+            //     {
+            //       language: "en-US",
+            //       url: "",
+            //       name: "English",
+            //     },
+            //   ],
+            subtitles_style: subtitlesConfig,
+          };
+
+          console.log(media.url);
+
+          device.play(media, function (err) {
+            if (err) {
+              console.error("blyat", err);
+              return;
+            }
+            if (!err) console.log("Playing on da chromecast");
+            if (!ceaseFire) {
+              prompt(device);
+            }
+          });
+        }
+      });
+    })
+    .catch((err) => console.error("nah g", err));
 });
