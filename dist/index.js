@@ -8,136 +8,82 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import ChromecastAPI from "chromecast-api";
-import inquirer from "inquirer";
 import { subtitlesConfig } from "./lib/subs.js";
-import { getContentUrl, getList } from "./fetch/fetchFilms.js";
+import { getList as testList, getContentUrls } from "./lib/fetchFilms.js";
+import inquirer from "inquirer";
 import { baseContentEndpoint } from "./lib/routes.js";
+import { controls } from "./lib/controls.js";
 const client = new ChromecastAPI();
-const ffTime = 30;
-const revTime = 30;
 let ceaseFire = false;
-const exitCode = (device) => {
-    console.log("exiting");
-    ceaseFire = true;
-    device.close();
-};
 const prompt = (device) => {
     inquirer
         .prompt({
         type: "input",
-        message: "u wot",
+        message: "u_wot",
         name: "u_wot",
     })
         .then((answer) => {
         const { u_wot } = answer;
-        switchBoard(device, u_wot);
+        if (u_wot === "q") {
+            console.log("exiting");
+            ceaseFire = true;
+            device.close();
+            return;
+        }
+        controls(device, u_wot);
         if (!ceaseFire) {
             prompt(device);
         }
-    })
-        .catch((err) => console.log("suka", err));
+    });
 };
-const switchBoard = (device, answer) => {
-    switch (answer) {
-        case "q": {
-            exitCode(device);
-            break;
-        }
-        case "p": {
-            console.log("pausing");
-            device.pause();
-            break;
-        }
-        case "o": {
-            console.log("resuming");
-            device.resume();
-            break;
-        }
-        case "k": {
-            console.log("stopping");
-            device.stop();
-            break;
-        }
-        case "m": {
-            console.log(`fast-forward: ${ffTime}secs`);
-            device.seek(ffTime);
-            break;
-        }
-        case "n": {
-            // to do: fix the reverse functionality
-            console.log("this don't work brah");
-            //   console.log(`reversing: ${revTime}`);
-            break;
-        }
-        case "c": {
-            // to do: figure this shit out
-            console.log("need to figure this out brah");
-            //   console.log("captions on");
-            break;
-        }
-        case "x": {
-            console.log("captions off");
-            device.subtitlesOff();
-            break;
-        }
-        default: {
-            console.log("invalid answer");
-            break;
-        }
+client.on("device", (device) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("we really out hurr");
+    console.log(device);
+    if (device.friendlyName === "Vishal-CHR") {
+        console.log("yo mon we found da chromecast");
+        yield testList()
+            .then((r) => r)
+            .then((d) => {
+            getContentUrls(d)
+                .then((res) => {
+                const filtered = res.filter((res) => res !== undefined);
+                //   const trimmed = filtered.map((url) => {
+                //     if (url) {
+                //       const trim = url.slice(1);
+                //       const match = trim.match(/\/(.*)/);
+                //       if (match) return match[0];
+                //       return;
+                //     }
+                //     return;
+                //   });
+                inquirer
+                    .prompt({
+                    // assigning `list` to `type` causes a TypeError ???
+                    // @ts-expect-error
+                    type: "list",
+                    message: "choose",
+                    choices: filtered,
+                    name: "chosen_film",
+                })
+                    .then((answer) => {
+                    const { chosen_film } = answer;
+                    console.log(`${baseContentEndpoint}${chosen_film}`);
+                    const media = {
+                        url: `${baseContentEndpoint}${chosen_film}`,
+                        subtitles_style: subtitlesConfig,
+                    };
+                    device.play(media, (err) => {
+                        if (err)
+                            return console.error("suka", err);
+                        console.log("we streaming da ting bruv");
+                        if (!ceaseFire)
+                            prompt(device);
+                    });
+                })
+                    .catch((err) => console.error("fuck", err));
+            })
+                .catch((err) => console.error("suka", err));
+        })
+            .catch((err) => console.error("blyat", err));
     }
-};
-const films = Promise.resolve(getList());
-films.then((films) => {
-    if (films === undefined || films.length === 0) {
-        console.error("no connection, or no films found");
-        return;
-    }
-    inquirer
-        .prompt({
-        // assigning `'list` to `type` causes TypeError ???
-        // @ts-expect-error
-        type: "list",
-        message: "choose",
-        choices: films,
-        name: "chosen_film",
-    })
-        .then((answer) => __awaiter(void 0, void 0, void 0, function* () {
-        const { chosen_film } = answer;
-        const contentUrl = yield getContentUrl(chosen_film);
-        if (contentUrl === "invalid" || contentUrl === "error") {
-            console.log("error occurred");
-            return;
-        }
-        client.on("device", (device) => {
-            console.log(device);
-            if (device.friendlyName === "Vishal-CHR") {
-                console.log("yo mon we found da caster");
-                console.log(contentUrl);
-                const media = {
-                    url: `${baseContentEndpoint}${contentUrl}`,
-                    //   subtitles: [
-                    //     {
-                    //       language: "en-US",
-                    //       url: "",
-                    //       name: "English",
-                    //     },
-                    //   ],
-                    subtitles_style: subtitlesConfig,
-                };
-                console.log(media.url);
-                device.play(media, function (err) {
-                    if (err) {
-                        console.error("blyat", err);
-                        return;
-                    }
-                    if (!err)
-                        console.log("Playing on da chromecast");
-                    if (!ceaseFire) {
-                        prompt(device);
-                    }
-                });
-            }
-        });
-    }))
-        .catch((err) => console.error("nah g", err));
-});
+}));
