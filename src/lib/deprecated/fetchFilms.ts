@@ -1,4 +1,8 @@
-import { baseContentEndpoint } from "./routes.js";
+/**
+ * @deprecated DO NOT USE
+ */
+
+import { baseContentEndpoint } from "../routes.js";
 import fetch from "node-fetch";
 
 const fetchFilms = async () => {

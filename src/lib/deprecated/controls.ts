@@ -1,3 +1,7 @@
+/**
+ * @deprecated DO NOT USE
+ */
+
 import Device from "chromecast-api/lib/device";
 
 const ffTime = 30;
@@ -10,10 +14,22 @@ type Answers =
   | "m" /*  */
   | "n" /*  */
   | "c" /* captions on */
-  | "x"; /* captions off */
+  | "x" /* captions off */
+  | "s"; /* status */
 
 export const controls = (device: Device, answer: Answers) => {
+  device.on("status", (s) => console.log(s));
+  console.log(device.getReceiverStatus());
+  console.log(device.getStatus());
   switch (answer) {
+    case "s": {
+      console.log("status");
+      const playerStatus = device.getStatus((s) => console.log(s));
+      console.log(playerStatus);
+      const receiverStatus = device.getReceiverStatus((s) => console.log(s));
+      console.log(receiverStatus);
+      break;
+    }
     case "p": {
       console.log("pausing");
       device.pause();

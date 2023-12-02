@@ -1,3 +1,6 @@
+/**
+ * @deprecated DO NOT USE
+ */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,11 +11,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import ChromecastAPI from "chromecast-api";
-import { subtitlesConfig } from "./lib/subs.js";
-import { getList as testList, getContentUrls } from "./lib/fetchFilms.js";
+import { subtitlesConfig } from "../subs.js";
+import { getList as testList, getContentUrls } from "./fetchFilms.js";
 import inquirer from "inquirer";
-import { baseContentEndpoint } from "./lib/routes.js";
-import { controls } from "./lib/controls.js";
+import { baseContentEndpoint } from "../routes.js";
+import { controls } from "./controls.js";
 const client = new ChromecastAPI();
 let ceaseFire = false;
 const prompt = (device) => {

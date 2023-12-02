@@ -1,15 +1,20 @@
+/**
+ * @deprecated DO NOT USE
+ */
+
 import ChromecastAPI from "chromecast-api";
-import { subtitlesConfig } from "./lib/subs.js";
+import { subtitlesConfig } from "../subs.js";
 import Device, { MediaResource } from "chromecast-api/lib/device";
-import { getList as testList, getContentUrls } from "./lib/fetchFilms.js";
+import { getList as testList, getContentUrls } from "./fetchFilms.js";
 import inquirer from "inquirer";
-import { baseContentEndpoint } from "./lib/routes.js";
-import { controls } from "./lib/controls.js";
+import { baseContentEndpoint } from "../routes.js";
+import { controls } from "./controls.js";
 
 const client = new ChromecastAPI();
 let ceaseFire: boolean = false;
 
 const prompt = (device: Device) => {
+  // device.on("status", (s) => console.log(s));
   inquirer
     .prompt({
       type: "input",
@@ -17,14 +22,15 @@ const prompt = (device: Device) => {
       name: "u_wot",
     })
     .then((answer) => {
+      // device.on("status", (s) => console.log(s));
       const { u_wot } = answer;
 
-      if (u_wot === "q") {
-        console.log("exiting");
-        ceaseFire = true;
-        device.close();
-        return;
-      }
+      // if (u_wot === "q") {
+      //   console.log("exiting");
+      //   ceaseFire = true;
+      //   device.close();
+      //   process.exit();
+      // }
 
       controls(device, u_wot);
 
@@ -35,9 +41,6 @@ const prompt = (device: Device) => {
 };
 
 client.on("device", async (device) => {
-  console.log("we really out hurr");
-  console.log(device);
-
   if (device.friendlyName === "Vishal-CHR") {
     console.log("yo mon we found da chromecast");
 
@@ -46,21 +49,16 @@ client.on("device", async (device) => {
       .then((d) => {
         getContentUrls(d)
           .then((res) => {
-            const filtered = res.filter((res) => res !== undefined);
-            //   const trimmed = filtered.map((url) => {
-            //     if (url) {
-            //       const trim = url.slice(1);
-            //       const match = trim.match(/\/(.*)/);
-            //       if (match) return match[0];
-            //       return;
-            //     }
-            //     return;
-            //   });
+            const filtered = res.reduce((ac: string[], el) => {
+              if (el !== undefined) {
+                ac.push(el);
+              }
+              return ac;
+            }, []);
 
             inquirer
               .prompt({
                 // assigning `list` to `type` causes a TypeError ???
-                // @ts-expect-error
                 type: "list",
                 message: "choose",
                 choices: filtered,
@@ -79,6 +77,7 @@ client.on("device", async (device) => {
                 device.play(media, (err) => {
                   if (err) return console.error("suka", err);
                   console.log("we streaming da ting bruv");
+                  // device.on("status", (s) => console.log(s));
                   if (!ceaseFire) prompt(device);
                 });
               })

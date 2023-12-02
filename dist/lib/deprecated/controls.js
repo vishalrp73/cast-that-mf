@@ -1,3 +1,6 @@
+/**
+ * @deprecated DO NOT USE
+ */
 const ffTime = 30;
 const revTime = 30;
 export const controls = (device, answer) => {
