@@ -8,22 +8,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import ChromecastAPI from "chromecast-api";
-import { getContentUrls, getList, promptFilm, } from "./lib/index.js";
-import { CEASE_FIRE, promptController } from "./lib/promptController.js";
+import { getContentUrls, getList, promptFilm, CEASE_FIRE, promptController, } from "./lib/index.js";
 const TARGET_CHROMECAST = "Vishal-CHR";
-// let CEASE_FIRE: boolean = false;
-// const promptController = async (device: Device) => {
-//   const answer: Answers = await inquirer.prompt({
-//     type: "input",
-//     message: "wot",
-//     name: "u_wot",
-//   });
-//   const stringifiedAnswer: string = answer.u_wot.toLowerCase();
-//   controller(device, stringifiedAnswer);
-//   if (!CEASE_FIRE) {
-//     promptController(device);
-//   }
-// };
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const client = new ChromecastAPI();
     client.on("device", (device) => __awaiter(void 0, void 0, void 0, function* () {
