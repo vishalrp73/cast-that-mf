@@ -52,7 +52,7 @@ export const controller = (device: Device, answer: string) => {
       device.seek(ffTime);
       break;
     }
-    /* Rewing ("k") */
+    /* Rewind ("k") */
     case Answers.Back: {
       device.getCurrentTime((err, time) => {
         if (err || time === undefined) return console.error("err", err);
